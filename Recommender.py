@@ -10,7 +10,48 @@ class Recommender:
     def get_prediction(self, userID, activityID):
         return self.model.predict(userID, activityID)
 
-    def get_recommendations(self, userID, n_recs):
-        for i in range(1, n_recs):
-            pass
-        return None
+    def get_recommendations(self, userId, dataframe, algorithm, n_recommendations, column_iid= None, column_uid= None):
+        """
+        This functions will use a trained algorithm to find the n top list of recommended items for a given userID.
+
+        Parameters
+        -----------
+
+        userId (int): the user ID of the person that we want recommendations for.
+
+        dataframe (object): the DataFrame containing three columns; userID, itemID and rating.
+
+        algorithm (object): the trained algorith used to recommend items.
+
+        n_rcommendations (int): the number of items recommended.
+
+        column_iid (string): name of the column containing the item ID.
+
+        column_uid (string): name of the column containing the user ID.
+
+
+        return
+        ------
+
+        List of ID of items that an specific user will like.
+
+        """
+        item_ids = dataframe[column_iid].to_list()
+        items_finished = dataframe[dataframe[column_uid] == userId][column_iid]
+
+        items_no_finished = []
+        for item in item_ids:
+            if item not in items_finished:
+                items_no_finished.append(item)
+
+        preds = []
+        for item in items_no_finished:
+            preds.append(SVD_model_for_pickle.predict(uid=userId, iid=item))
+
+        recommendations_rating = {pred[1]:pred[3] for pred in preds}
+
+        order_dict = {k: v for k, v in sorted(recommendations_rating.items(), key=lambda item: item[1])}
+
+        top_predictions = list(order_dict.keys())[:n_recommendations]
+        
+        return top_predictions
