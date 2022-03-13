@@ -1,4 +1,14 @@
+import numpy as np
 import pandas as pd
+from scipy.sparse import coo_matrix
+from scipy.sparse.linalg import svds
+from pandas.core.frame import DataFrame
+from pandas.io.parsers import read_csv
+from surprise import SVDpp
+from surprise import Dataset, Reader
+from surprise.model_selection import train_test_split
+from surprise import accuracy
+from collections import defaultdict
 
 class Recommender:
 
