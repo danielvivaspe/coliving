@@ -1,3 +1,5 @@
+import pandas as pd
+
 class Recommender:
 
     def __init__(self):
@@ -8,6 +10,11 @@ class Recommender:
             return model
 
     def get_prediction(self, userID, activityID):
+        '''
+        This function predcits the expected rating for a given activityId and userId
+        
+        Output (float): a value from 1 to 5 representing the expected rating
+        '''
         return self.model.predict(userID, activityID)
 
     def get_recommendations(self, userId, dataframe, n_recommendations, column_iid= None, column_uid= None):
@@ -53,8 +60,53 @@ class Recommender:
         top_predictions = list(order_dict.keys())[:n_recommendations]
         
         return top_predictions
-        
-    def check_activities_user(userId, dataframe, n, column_rating= None, column_uid= None):
+
+    def check_recommended_item_name(self, list):
+        """
+        This functions will show the names of the n top rated items for a given userID.
+
+        Parameters
+        -----------
+
+        list (object): the list of n recommended itemId.
+
+        return
+        ------
+
+        A list with the n names of the itemId recommended to the given userId.
+
+        """
+        dict_items = {
+                1: 'YOGA', 
+                2: 'NATACION',
+                3: 'BAILE', 
+                4: 'GOLF',
+                5: 'GIMNASIO',
+                6: 'TIRO CON ARCO',
+                7: 'ZUMBA', 
+                8: 'TENIS',
+                9: 'CLUB DE LECTURA',
+                10: 'CLUB DE ESCRITURA',
+                11: 'PINTURA', 
+                12: 'MUSICA',
+                13: 'MACRAME',
+                14: 'INFORMATICA',
+                15: 'JARDINERIA',
+                16: 'MANUALIDADES',
+                17: 'IDIOMAS', 
+                18: 'COCINA',
+                19: 'COCTELERIA',
+                20: 'CERVECERIA ARTESANAL',
+                21: 'CATAS DE COMIDA Y BEBIDA',
+                22: 'BINGO', 
+                23: 'PARCHIS',
+                24: 'AJEDREZ', 
+                25: 'TEATRO'
+            }
+
+        return [dict_items[i] for i in list]
+
+    def check_activities_user(self, userId, dataframe, n, column_rating= None, column_uid= None):
         """
         This functions will show the n top rated items for a given userID.
 
@@ -78,4 +130,115 @@ class Recommender:
         A dataframe with the n top rated items by that given user.
 
         """
-        return dataframe[dataframe[column_uid] ==userId].sort_values(column_rating, ascending=False)[:n]
+        dataframe = dataframe[dataframe[column_uid] ==userId].sort_values(column_rating, ascending=False)[:n]
+        
+        #we create a dictionary to map the name of activities and change it for their activity code
+        dict_activities = {
+            1: 'YOGA', 
+            2: 'NATACION',
+            3: 'BAILE', 
+            4: 'GOLF',
+            5: 'GIMNASIO',
+            6: 'TIRO CON ARCO',
+            7: 'ZUMBA', 
+            8: 'TENIS',
+            9: 'CLUB DE LECTURA',
+            10: 'CLUB DE ESCRITURA',
+            11: 'PINTURA', 
+            12: 'MUSICA',
+            13: 'MACRAME',
+            14: 'INFORMATICA',
+            15: 'JARDINERIA',
+            16: 'MANUALIDADES',
+            17: 'IDIOMAS', 
+            18: 'COCINA',
+            19: 'COCTELERIA',
+            20: 'CERVECERIA ARTESANAL',
+            21: 'CATAS DE COMIDA Y BEBIDA',
+            22: 'BINGO', 
+            23: 'PARCHIS',
+            24: 'AJEDREZ', 
+            25: 'TEATRO'
+        }
+
+        dataframe['itemName'] = dataframe['itemId'].map(dict_activities)
+
+        return dataframe
+    
+    def preprocess_form(self, dataframe):
+        """
+        This functions will preprocess the original csv from the Google form and get it ready for the model.
+
+        Parameters
+        -----------
+
+        dataframe (object): the DataFrame containing three columns; userID, itemID and rating.
+
+        return
+        ------
+
+        A new dataframe ready for the model.
+
+        """
+        #we clean the df from only nan answers and we erase the first two columns as they are not answers for the algorithm
+        dataframe.drop(['Timestamp', '¿Qué edad tienes?'], axis=1, inplace=True)
+        dataframe.dropna(how='all', inplace= True)
+        
+        #we need to change the answers from the form from str to int
+        dicc_formulario = {
+            '1 No me gusta': 1,
+            '2': 2,
+            '3': 3,
+            '4': 4,
+            '5 Me encanta': 5
+        }
+
+        for i in dataframe.columns:
+            dataframe[i] = dataframe[i].map(dicc_formulario)
+
+        #we transorm the dataframe to get the triplet column format we need to feed our algorithm
+        df_new = pd.DataFrame([(1,1,1)])
+        for i in dataframe.index:
+            for j in dataframe.columns:
+                if dataframe[j][i] == 'NaN':
+                    pass
+                else:
+                    df_new = df_new.append([(i,j, dataframe[j][i])])
+
+        df_new.dropna(how= 'any', inplace=True)
+        df_new = df_new[1:]
+
+        #we cahange the columns names
+        df_new.columns = ['userId', 'itemId', 'rating']
+
+        #we create a dictionary to map the name of activities and change it for their activity code
+        dict_activities = {
+        'Lista de actividades: [YOGA]': 1, 
+        'Lista de actividades: [NATACIÓN ]': 2,
+        'Lista de actividades: [BAILE ]': 3, 
+        'Lista de actividades: [GOLF ]': 4,
+        'Lista de actividades: [GIMNASIO ]': 5,
+        'Lista de actividades: [TIRO CON ARCO ]': 6,
+        'Lista de actividades: [ZUMBA ]': 7, 
+        'Lista de actividades: [TENIS]': 8,
+        'Lista de actividades: [CLUB DE LECTURA]': 9,
+        'Lista de actividades: [CLUB DE ESCRITURA]': 10,
+        'Lista de actividades: [PINTURA]': 11, 
+        'Lista de actividades: [MÚSICA ]': 12,
+        'Lista de actividades: [MACRAMÉ]': 13,
+        'Lista de actividades: [INFORMÁTICA]': 14,
+        'Lista de actividades: [JARDINERÍA]': 15,
+        'Lista de actividades: [MANUALIDADES]': 16,
+        'Lista de actividades: [IDIOMAS]': 17, 
+        'Lista de actividades: [COCINA]': 18,
+        'Lista de actividades: [COCTELERÍA]': 19,
+        'Lista de actividades: [CERVECERÍA ARTESANAL]': 20,
+        'Lista de actividades: [CATAS DE COMIDA Y BEBIDA]': 21,
+        'Lista de actividades: [BINGO]': 22, 
+        'Lista de actividades: [PARCHIS]': 23,
+        'Lista de actividades: [AJEDREZ]': 24, 
+        'Lista de actividades: [TEATRO]': 25
+        }
+        df_new['itemId'] = df_new['itemId'].map(dict_activities)
+        
+        return df_new
