@@ -1,3 +1,5 @@
+import pickle
+
 import pandas as pd
 
 
@@ -36,8 +38,8 @@ class Recommender:
         self.triplets = self.preprocess_form()
 
     def load_model(self):
-        with open('model/DEFIANT_RECOMMENDER.model', 'rb') as model:
-            return model
+        file = open('model/model_prueba.model', 'rb')
+        return pickle.load(file)
 
     # Importamos Datos:
     def load_data(self):
@@ -49,7 +51,7 @@ class Recommender:
 
         Output (float): a value from 1 to 5 representing the expected rating
         '''
-        return self.model.predict(userID, activityID)
+        return self.model.predict(userID, activityID).est
 
     def get_recommendations(self, userId, n_recommendations=-1):
         """
